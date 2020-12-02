@@ -2,24 +2,34 @@ from flask import Flask
 from flask import render_template, request, jsonify
 import json
 import os
-import metapy
+#import metapy
 import requests
 import base64
 import sys
 import re
+import Classifier
 
-
-app = Flask(__name__) 
+app = Flask(__name__)
 environ = 'development'
+#environ = 'production'
 dataconfig = json.loads(open("config.json", "r").read())
 app.dataenv = dataconfig[environ]
 app.rootpath = dataconfig[environ]["rootpath"]
 app.datasetpath = dataconfig[environ]['datasetpath']
 app.searchconfig = dataconfig[environ]['searchconfig']
-index = metapy.index.make_inverted_index(app.searchconfig)
-query = metapy.index.Document()
+#index = metapy.index.make_inverted_index(app.searchconfig)
+#query = metapy.index.Document()
 uni_list = json.loads(open(dataconfig[environ]["unispath"],'r').read())["unis"]
 loc_list = json.loads(open(dataconfig[environ]["locspath"],'r').read())["locs"]
+
+pos_training_data_file = 'directory-positives.txt'
+neg_training_data_file = 'directory-negatives.txt'
+no_training_samples = 800
+no_test_samples = 100
+
+classifier = Classifier.naive_bayes_classifier(pos_training_data_file, neg_training_data_file,
+                                               no_training_samples)
+classifier.initialize_classifier()
 
 
 @app.route('/')
@@ -51,10 +61,20 @@ def filtered_results(results,num_results,min_score,selected_uni_filters,selected
                 break
     return filtered_results,universities,states,countries
 
+@app.route('/validate', methods=['POST'])
+def validate():
+    data = json.loads(request.data)
+    url_to_validate = data['query']
 
+    result = classifier.classify(url_to_validate)
+    if result == True:
+        res_string = url_to_validate+' is a valid directory URL'
+    else:
+        res_string = url_to_validate+' is NOT a valid directory URL'
 
-
-
+    return jsonify({
+        "docs": res_string
+    })
 
 @app.route('/search', methods=['POST'])
 def search():
@@ -70,12 +90,16 @@ def search():
 
     # Dynamically load the ranker
     sys.path.append(app.rootpath + "/expertsearch")
+    #sys.path.append("C:\\Prakash\\UIUC\\410\\CourseProject\\ExpertSearch-master\\data\\expertsearch")
 
     from ranker import load_ranker
 
     ranker = load_ranker(app.searchconfig)
 
-    results = ranker.score(index, query, 100) 
+    try:
+        results = ranker.score(index, query, 100)
+    except:
+        print('Exception')
 
     results,universities,states,countries = filtered_results(results,num_results,min_score,selected_uni_filters,selected_loc_filters)
 
@@ -94,7 +118,6 @@ def search():
     return jsonify({
         "docs": docs
     })
-
 
 
 @app.route("/admin/ranker/get")

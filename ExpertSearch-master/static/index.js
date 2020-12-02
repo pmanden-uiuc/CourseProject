@@ -130,6 +130,32 @@ var doSearch = function() {
 }
 }
 
+var doValidate = function() {
+    const data = {
+        "query": searchTerm
+    }
+    if (searchTerm!='')
+    {
+    var num_fetched_res = 0
+    fetch("http://localhost:8095/validate", {
+    // fetch("http://expertsearch.centralus.cloudapp.azure.com/search", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data)
+    }).then(response => {
+        response.json().then(data => {
+            const mydata = data.docs;
+            $("#validation-results").html('')
+            data = '<br><br><br><h1>'+mydata+'</h1>'
+            $("#validation-results").append(data);
+        })
+    });
+}
+}
+
+
 $(window).on("resize",function() {
     $(document.body).css("margin-top", $(".navbar").height()+5 );
     var width = $(".select2-container").width()
@@ -174,7 +200,7 @@ function  toggleFilter() {
 $("#submitButton").click(function() {
     numResults = startResults;
     searchTerm = $('#query').val()
-    doSearch();
+    doValidate();
 });
 
 $("#filterButton").click(function() {
