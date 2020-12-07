@@ -6,7 +6,7 @@ var selected_loc_filters = []
 var selected_uni_filters = []
 var searchTerm = ''
 
-
+var selected_drop_down = 'Search'
 
 var docDiv = (doc) => {
     const name = doc[0];
@@ -130,14 +130,14 @@ var doSearch = function() {
 }
 }
 
-var doValidate = function() {
+var doValidateFaculty = function() {
     const data = {
         "query": searchTerm
     }
     if (searchTerm!='')
     {
     var num_fetched_res = 0
-    fetch("http://localhost:8095/validate", {
+    fetch("http://localhost:8095/validatefaculty", {
     // fetch("http://expertsearch.centralus.cloudapp.azure.com/search", {
         method: "POST",
         headers: {
@@ -154,6 +154,32 @@ var doValidate = function() {
     });
 }
 }
+
+var doValidateDirectory = function() {
+    const data = {
+        "query": searchTerm
+    }
+    if (searchTerm!='')
+    {
+    var num_fetched_res = 0
+    fetch("http://localhost:8095/validatedirectory", {
+    // fetch("http://expertsearch.centralus.cloudapp.azure.com/search", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data)
+    }).then(response => {
+        response.json().then(data => {
+            const mydata = data.docs;
+            $("#validation-results").html('')
+            data = '<br><br><br><h1>'+mydata+'</h1>'
+            $("#validation-results").append(data);
+        })
+    });
+}
+}
+
 
 
 $(window).on("resize",function() {
@@ -197,10 +223,28 @@ function  toggleFilter() {
   filters_div.style.display = filters_div.style.display=== 'none' ? 'flex' : 'none';
 }
 
+$(document).ready(function() {
+    $('.dropdown').each(function (key, dropdown) {
+        var $dropdown = $(dropdown);
+        $dropdown.find('.dropdown-menu a').on('click', function () {
+            //$dropdown.find('button').text($(this).text()).append(' <span class="caret"></span>');
+            selected_drop_down = $(this).text();
+        });
+    });
+});
+
 $("#submitButton").click(function() {
     numResults = startResults;
     searchTerm = $('#query').val()
-    doValidate();
+    if (selected_drop_down == 'Search') {
+        doSearch();
+    }
+    else if (selected_drop_down == 'Faculty Page') {
+        doValidateFaculty();
+    }
+    else if (selected_drop_down == 'Directory Page'){
+        doValidateDirectory();
+    }
 });
 
 $("#filterButton").click(function() {

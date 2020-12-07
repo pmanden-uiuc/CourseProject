@@ -49,6 +49,10 @@ def load_file(filename, no_items, random_selection=True):
 
     return ret_list
 
+#
+# Loads test data from the specified file and returns a list of documents (doc per line)
+# (No processing done)
+#
 def load_test_samples(filename, start_loc, no_samples=100):
     file_handle = open(filename, "r")
 
@@ -71,6 +75,15 @@ def load_test_samples(filename, start_loc, no_samples=100):
     file_handle.close()
     return(sample_list)
 
+#
+# Generates term document matrix from the provided list of docs. Input is expected to be a list
+# with each line representing a doc. Each line is a list of space separated terms
+# Returns
+#   - tdm: Term doc matrix
+#   - freq: A dictionary of terms and corresponding counts
+#   - total_features: number of terms in all docs
+#   - total_cnts_features : Count of each term in tdm
+#
 def calc_term_doc_matrix(docs):
     vec = CountVectorizer()
     X = vec.fit_transform(docs)
@@ -85,8 +98,10 @@ def calc_term_doc_matrix(docs):
 
     return tdm, freq, total_features, total_cnts_features
 
+#
 # Returns a list of probability of words in the given class
-def get_probability_with_laplase_smoothing(url, freq, total_cnts_features, total_features):
+#
+def get_probability_with_laplace_smoothing(url, freq, total_cnts_features, total_features):
 
     combined_prob = 1.0
     prob_s_with_ls = []
@@ -108,8 +123,7 @@ def get_probability_with_laplase_smoothing(url, freq, total_cnts_features, total
     return prob, combined_prob
 
 class naive_bayes_classifier():
-    def __init__(self, pos_training_data_file_, neg_training_data_file_,
-                          no_training_samples_):
+    def __init__(self, pos_training_data_file_, neg_training_data_file_, no_training_samples_):
         self.pos_training_data_file = pos_training_data_file_
         self.neg_training_data_file = neg_training_data_file_
         self.no_training_samples = no_training_samples_
@@ -144,11 +158,11 @@ class naive_bayes_classifier():
     #
     def classify(self, test_url):
         pos_words_prob, pos_combined_word_prob = \
-            get_probability_with_laplase_smoothing(test_url,
+            get_probability_with_laplace_smoothing(test_url,
                 self.pos_freq, self.pos_total_cnts_features, self.total_features)
 
         neg_words_prob, neg_combined_word_prob = \
-            get_probability_with_laplase_smoothing(test_url,
+            get_probability_with_laplace_smoothing(test_url,
                 self.neg_freq, self.neg_total_cnts_features, self.total_features)
 
         if pos_combined_word_prob > neg_combined_word_prob:
@@ -158,12 +172,7 @@ class naive_bayes_classifier():
             #print("{} categorized as Negative".format(test_url))
             return False
 
-if __name__ == '__main__':
-
-    pos_training_data_file = 'directory-positives.txt'
-    neg_training_data_file = 'directory-negatives.txt'
-    no_training_samples = 800
-    no_test_samples = 100
+def test_classifier(pos_training_data_file, neg_training_data_file, no_training_samples, no_test_samples ):
 
     classifier = naive_bayes_classifier(pos_training_data_file, neg_training_data_file,
                                         no_training_samples)
@@ -199,4 +208,15 @@ if __name__ == '__main__':
     print('Precision {}%'.format(100*precision))
     print('Recall    {}%'.format(100*recall))
     print('F1 score  {}'.format(2*precision*recall/(precision+recall)))
+
+
+if __name__ == '__main__':
+    #pos_training_data_file = 'directory-positives.txt'
+    #neg_training_data_file = 'directory-negatives.txt'
+    #no_training_samples = 800
+    #no_test_samples = 100
+
+    test_classifier('directory-positives.txt', 'directory-negatives.txt', 800, 100 )
+    test_classifier('faculty-pages-positives.txt', 'faculty-pages-negatives.txt', 6000, 300)
+
 

@@ -22,14 +22,24 @@ app.searchconfig = dataconfig[environ]['searchconfig']
 uni_list = json.loads(open(dataconfig[environ]["unispath"],'r').read())["unis"]
 loc_list = json.loads(open(dataconfig[environ]["locspath"],'r').read())["locs"]
 
-pos_training_data_file = 'directory-positives.txt'
-neg_training_data_file = 'directory-negatives.txt'
-no_training_samples = 800
-no_test_samples = 100
+# Initialize Directory Classifier
+dir_pos_training_data_file = 'directory-positives.txt'
+dir_neg_training_data_file = 'directory-negatives.txt'
+dir_no_training_samples = 800
+dir_no_test_samples = 100
+dir_classifier = Classifier.naive_bayes_classifier(dir_pos_training_data_file, dir_neg_training_data_file,
+                                               dir_no_training_samples)
+dir_classifier.initialize_classifier()
 
-classifier = Classifier.naive_bayes_classifier(pos_training_data_file, neg_training_data_file,
-                                               no_training_samples)
-classifier.initialize_classifier()
+
+# Initialize Faculty Classifier
+fac_pos_training_data_file = 'faculty-pages-positives.txt'
+fac_neg_training_data_file = 'faculty-pages-negatives.txt'
+fac_no_training_samples = 6000
+fac_no_test_samples = 100
+fac_classifier = Classifier.naive_bayes_classifier(fac_pos_training_data_file, fac_neg_training_data_file,
+                                               fac_no_training_samples)
+fac_classifier.initialize_classifier()
 
 
 @app.route('/')
@@ -61,12 +71,12 @@ def filtered_results(results,num_results,min_score,selected_uni_filters,selected
                 break
     return filtered_results,universities,states,countries
 
-@app.route('/validate', methods=['POST'])
-def validate():
+@app.route('/validatedirectory', methods=['POST'])
+def validatedirectory():
     data = json.loads(request.data)
     url_to_validate = data['query']
 
-    result = classifier.classify(url_to_validate)
+    result = dir_classifier.classify(url_to_validate)
     if result == True:
         res_string = url_to_validate+' is a valid directory URL'
     else:
@@ -75,6 +85,22 @@ def validate():
     return jsonify({
         "docs": res_string
     })
+
+@app.route('/validatefaculty', methods=['POST'])
+def validatefaculty():
+    data = json.loads(request.data)
+    url_to_validate = data['query']
+
+    result = fac_classifier.classify(url_to_validate)
+    if result == True:
+        res_string = url_to_validate+' is a valid Faculty URL'
+    else:
+        res_string = url_to_validate+' is NOT a valid Faculty URL'
+
+    return jsonify({
+        "docs": res_string
+    })
+
 
 @app.route('/search', methods=['POST'])
 def search():
