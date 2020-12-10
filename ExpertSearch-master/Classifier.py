@@ -1,11 +1,11 @@
 import pandas as pd
 import nltk
 nltk.download('punkt')
-from nltk.tokenize import word_tokenize
+#from nltk.tokenize import word_tokenize
 from sklearn.feature_extraction.text import CountVectorizer
 import random
 import re
-from functools import reduce
+#from functools import reduce
 
 #
 # Removes whitespace, unnecessary words from the provided url and returns
@@ -172,19 +172,23 @@ class naive_bayes_classifier():
             #print("{} categorized as Negative".format(test_url))
             return False
 
-def test_classifier(pos_training_data_file, neg_training_data_file, no_training_samples, no_test_samples ):
+def test_naive_bayes_classifier(pos_training_data_file, neg_training_data_file,
+                                no_training_samples, no_test_samples):
 
     classifier = naive_bayes_classifier(pos_training_data_file, neg_training_data_file,
                                         no_training_samples)
     classifier.initialize_classifier()
 
-    # load test data
+    # load positive & negative test samples. Test samples are selected from the same input files, however,
+    # samples are selected from beyond the no_training_samples to avoid using data used for training.
+    # (see load_test_samples function)
     pos_test_samples = load_test_samples(pos_training_data_file, no_training_samples, no_test_samples)
     neg_test_samples = load_test_samples(neg_training_data_file, no_training_samples, no_test_samples)
 
     true_positive = 0
     true_negative = 0
 
+    # Test against positive samples
     for test_url in pos_test_samples:
         result = classifier.classify(test_url)
         if result == True:
@@ -192,6 +196,7 @@ def test_classifier(pos_training_data_file, neg_training_data_file, no_training_
         else:
             print("{} False Negative".format(test_url))
 
+    # test against negative samples
     for test_url in neg_test_samples:
         result = classifier.classify(test_url)
         if result == True:
@@ -199,15 +204,15 @@ def test_classifier(pos_training_data_file, neg_training_data_file, no_training_
         else:
             true_negative += 1
 
-    print('Positive Samples {}, Accuracy - {}%'.format(true_positive, 100*true_positive/no_test_samples))
-    print('Negative Samples {}, Accuracy - {}%'.format(true_negative, 100*true_negative/no_test_samples))
+    print('Positive Samples {}, Accuracy - {:.2}'.format(true_positive, true_positive/no_test_samples))
+    print('Negative Samples {}, Accuracy - {:.2}'.format(true_negative, true_negative/no_test_samples))
 
     precision = true_positive/(true_positive+no_test_samples-true_negative)
     recall = true_positive/(true_positive+no_test_samples-true_positive)
 
-    print('Precision {}%'.format(100*precision))
-    print('Recall    {}%'.format(100*recall))
-    print('F1 score  {}'.format(2*precision*recall/(precision+recall)))
+    print('Precision {:.2}'.format(precision))
+    print('Recall    {:.2}'.format(recall))
+    print('F1 score  {:.2}'.format(2*precision*recall/(precision+recall)))
 
 
 if __name__ == '__main__':
@@ -216,7 +221,10 @@ if __name__ == '__main__':
     #no_training_samples = 800
     #no_test_samples = 100
 
-    test_classifier('directory-positives.txt', 'directory-negatives.txt', 800, 100 )
-    test_classifier('faculty-pages-positives.txt', 'faculty-pages-negatives.txt', 6000, 300)
+    # Test directory classifier
+    test_naive_bayes_classifier('directory-positives.txt', 'directory-negatives.txt', 800, 100 )
+
+    # Test faculty classifier
+    test_naive_bayes_classifier('faculty-pages-positives.txt', 'faculty-pages-negatives.txt', 6000, 300)
 
 
