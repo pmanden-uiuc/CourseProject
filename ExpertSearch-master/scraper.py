@@ -134,7 +134,7 @@ if __name__ == '__main__':
 
     # Scraping all universities takes a long time. Set the value below to a small
     # number to test the functionality
-    #no_universities_to_scrape = 10
+    no_universities_to_scrape = 3
 
     all_urls = []
     for i, link in enumerate(university_list):
@@ -148,8 +148,8 @@ if __name__ == '__main__':
             #print('Exception')
             continue
 
-        #if i > no_universities_to_scrape:
-        #    break
+        if i > no_universities_to_scrape:
+            break
 
     driver.close()
 

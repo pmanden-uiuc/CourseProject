@@ -1,11 +1,9 @@
 import pandas as pd
 import nltk
 nltk.download('punkt')
-#from nltk.tokenize import word_tokenize
 from sklearn.feature_extraction.text import CountVectorizer
 import random
 import re
-#from functools import reduce
 
 #
 # Removes whitespace, unnecessary words from the provided url and returns
